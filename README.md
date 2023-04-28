@@ -1,7 +1,7 @@
 # What's updog?
 Not much, how about you?
 
-Jokes aside, updog is Statuspages companion and best friend.
+Jokes aside, updog is statuspages companion and best friend.
 
 Updog receives alerts via webhook from prometheus-alertmanager and automatically creates/updates GitHub issues to be displayed as incidents using [dombott/statuspage](https://github.com/dombott/statuspage).
 

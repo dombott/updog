@@ -32,6 +32,23 @@ If the issue exists, updog will close it.
 
 # How do I use this?
 Simply run updog next to your alertmanager and set up a route to send alerts to updogs webhook.
+```
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+
+  routes:
+  - match:
+      severity: critical
+    receiver: updog
+
+receivers:
+- name: updog
+  webhook_configs:
+  - url: 'http://updog.default.svc.cluster.local:8080/webhook'
+```
 
 Configure updog to use the GitHub repo of your choice and provide a GitHub PAT for auth.
 

@@ -15,7 +15,9 @@ token := os.Getenv("GH_TOKEN")
 ```
 
 `addr`: the address of the webhook. Updog handles requests to `/webhook` and `/healthz`.
+
 `owner` and `repo`: the owner and repo name that updog operates in.
+
 `token`: a GitHub PAT. Needs permission on the repo to read and write issues and labels. 
 
 # How does it work?
@@ -30,5 +32,7 @@ If the issue exists, updog will close it.
 
 # How do I use this?
 Simply run updog next to your alertmanager and set up a route to send alerts to updogs webhook.
+
 Configure updog to use the GitHub repo of your choice and provide a GitHub PAT for auth.
+
 If you want to use statuspage together with updog, configure both to use the same GitHub repo.

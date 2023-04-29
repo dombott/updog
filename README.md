@@ -1,9 +1,9 @@
 # What's updog?
-Not much, how about you?
+Well, hopefully your application is :point_left::sunglasses::point_left:
 
-Jokes aside, updog is statuspages companion and best friend.
+If not, updog will tell you when it is up again.
 
-Updog receives alerts via webhook from prometheus-alertmanager and automatically creates/updates GitHub issues to be displayed as incidents using [dombott/statuspage](https://github.com/dombott/statuspage).
+Updog is statuspages companion and best friend. It receives alerts via webhook from prometheus-alertmanager and automatically creates/updates GitHub issues to be displayed as incidents using [dombott/statuspage](https://github.com/dombott/statuspage).
 
 # Configuration
 The following flags and env vars can be used to configure updog.

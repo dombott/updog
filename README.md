@@ -1,7 +1,7 @@
 # What's updog?
 Well, hopefully your application is :point_left::sunglasses::point_left:
 
-If not, updog will tell you when it is up again.
+If not, updog will tell you.
 
 Updog is statuspages companion and best friend. It receives alerts via webhook from prometheus-alertmanager and automatically creates/updates GitHub issues to be displayed as incidents using [dombott/statuspage](https://github.com/dombott/statuspage).
 

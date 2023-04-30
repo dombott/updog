@@ -30,10 +30,10 @@ It is recommended to use the alertmanager templating to fill these labels with v
 To identify an issue later, the fingerprint of the alert is added to the title during creation (statuspage will cut off this identifier when displaying the incident).
 The alertmanager fingerprint is the hash value of all the labels of an alert.
 
-If a `firing` alert comes from the alertmanager, updog will check if there is already an open issue for the alert by searching for the hash value.
+If a `firing` alert comes from the alertmanager, updog will check if there is already an open issue for the alert by searching for the identifier.
 If the issue already exists, updog does nothing. If the issue doesn't exist, updog will create the issue (and the labels if necessary).
 
-If a `resolved` alert comes from the alertmanager, updog will check if there is an open issue for the alert by searching for the hash value.
+If a `resolved` alert comes from the alertmanager, updog will check if there is an open issue for the alert by searching for the identifier.
 If the issue exists, updog will close it.
 
 # How do I use this?

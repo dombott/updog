@@ -22,12 +22,18 @@ token := os.Getenv("GH_TOKEN")
 
 # How does it work?
 Updog generates an issue (title, body, labels) from an alert using its metadata.
-To identify an issue later, the hash of the generated issue is added to the title during creation (statuspage will cut off this identifier when displaying the issue).
 
-If a `firing` alert comes from the alertmanager, updog will check if there is already an issue for the alert by searching for the hash value.
+It uses the content of the labels `updog/title`, `updog/body` and `updog/labels` to fill the respective field.
+Multiple labels can be added as a semicolon separated list. The label `type/incident` is added automatically (to make the incident show up in statuspage).
+It is recommended to use the alertmanager templating to fill these labels with values from the prometheus metrics.
+
+To identify an issue later, the fingerprint of the alert is added to the title during creation (statuspage will cut off this identifier when displaying the incident).
+The alertmanager fingerprint is the hash value of all the labels of an alert.
+
+If a `firing` alert comes from the alertmanager, updog will check if there is already an open issue for the alert by searching for the hash value.
 If the issue already exists, updog does nothing. If the issue doesn't exist, updog will create the issue (and the labels if necessary).
 
-If a `resolved` alert comes from the alertmanager, updog will check if there is an issue for the alert by searching for the hash value.
+If a `resolved` alert comes from the alertmanager, updog will check if there is an open issue for the alert by searching for the hash value.
 If the issue exists, updog will close it.
 
 # How do I use this?
@@ -49,6 +55,8 @@ receivers:
   webhook_configs:
   - url: 'http://updog.default.svc.cluster.local:8080/webhook'
 ```
+
+Add the labels `updog/title`, `updog/body` and `updog/labels` to your alerts and fill them via alertmanager templating.
 
 Configure updog to use the GitHub repo of your choice and provide a GitHub PAT for auth.
 

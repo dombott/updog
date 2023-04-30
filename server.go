@@ -32,14 +32,34 @@ func (u *updog) webhook(w http.ResponseWriter, r *http.Request) {
 
 	for _, alert := range data.Alerts {
 		if alert.Status == "firing" {
-			u.createIssueIfNotExists(*models.IssueFromAlert(alert))
+			if err := u.createIssueIfNotExists(*models.IssueFromAlert(alert)); err != nil {
+				u.log.Error(err, "error creating issue")
+				http.Error(w, "failed to create issue", 500)
+				return
+			}
 		} else {
-			u.closeIssueIfExists(*models.IssueFromAlert(alert))
+			if err := u.closeIssueIfExists(*models.IssueFromAlert(alert)); err != nil {
+				u.log.Error(err, "error closing issue")
+				http.Error(w, "failed to close issue", 500)
+				return
+			}
 		}
 	}
 }
 
 func (u *updog) createIssueIfNotExists(issue models.Issue) error {
+	// search issue with identifier
+	foundIssue, err := u.client.SearchIssue(fmt.Sprintf(searchFormat, issue.Fingerprint))
+	if err != nil {
+		return err
+	}
+
+	// issue with identifier already exists, do nothing
+	if foundIssue != nil {
+		u.log.Info("issue already exists, skipping", "fingerprint", issue.Fingerprint)
+		return nil
+	}
+
 	labels, err := u.client.ListLabels()
 	if err != nil {
 		return err
@@ -55,19 +75,8 @@ func (u *updog) createIssueIfNotExists(issue models.Issue) error {
 		}
 	}
 
-	// search issue with identifier
-	foundIssue, err := u.client.SearchIssue(fmt.Sprintf(searchFormat, issue.Hash()))
-	if err != nil {
-		return err
-	}
-
-	// issue with identifier already exists, do nothing
-	if foundIssue != nil {
-		return nil
-	}
-
 	// create issue
-	_, err = u.client.CreateIssue(fmt.Sprintf(titleFormat, issue.Title, issue.Hash()), issue.Body, issue.Labels)
+	_, err = u.client.CreateIssue(fmt.Sprintf(titleFormat, issue.Title, issue.Fingerprint), issue.Body, issue.Labels)
 	if err != nil {
 		return err
 	}
@@ -76,17 +85,21 @@ func (u *updog) createIssueIfNotExists(issue models.Issue) error {
 
 func (u *updog) closeIssueIfExists(issue models.Issue) error {
 	// search issue with identifier
-	foundIssue, err := u.client.SearchIssue(issue.Hash())
+	foundIssue, err := u.client.SearchIssue(issue.Fingerprint)
 	if err != nil {
 		return err
 	}
 
-	// issue with identifier exists, close
-	if foundIssue != nil {
-		if err := u.client.CloseIssue(*foundIssue.Number); err != nil {
-			return err
-		}
+	if foundIssue == nil {
+		u.log.Info("no open issue found, skipping", "fingerprint", issue.Fingerprint)
+		return nil
 	}
+
+	// issue with identifier exists, close
+	if err := u.client.CloseIssue(*foundIssue.Number); err != nil {
+		return err
+	}
+
 	return nil
 }
 

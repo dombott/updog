@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v39/github"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -29,7 +30,7 @@ func NewClient(token, owner, repo string) *Client {
 		githubClient: github.NewClient(tc),
 		owner:        owner,
 		repo:         repo,
-		cacheTTL:     5 * time.Minute, // TODO make configurable
+		cacheTTL:     5 * time.Minute,
 	}
 }
 
@@ -42,30 +43,34 @@ func (c *Client) CreateIssue(title, body string, labels []string) (*github.Issue
 	}
 	issue, _, err := c.githubClient.Issues.Create(context.Background(), c.owner, c.repo, issueRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create issue")
 	}
 	return issue, nil
 }
 
-// SearchIssue searches for existing issues where the identifier is included in the title
+// SearchIssue searches for open issues where the identifier is included in the title
 func (c *Client) SearchIssue(identifier string) (*github.Issue, error) {
 	opts := &github.SearchOptions{Sort: "created", Order: "desc"}
-	query := fmt.Sprintf("repo:%s/%s %s in:title", c.owner, c.repo, identifier)
+	query := fmt.Sprintf("repo:%s/%s %s in:title is:issue is:open", c.owner, c.repo, identifier)
 	results, _, err := c.githubClient.Search.Issues(context.Background(), query, opts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to search issue")
 	}
-	if *results.Total > 0 {
+	switch *results.Total {
+	case 0:
+		return nil, nil
+	case 1:
 		return results.Issues[0], nil
+	default:
+		return nil, fmt.Errorf("found more than one open issue with identifier %q", identifier)
 	}
-	return nil, nil
 }
 
 // CloseIssue closes the specified issue on the repository.
 func (c *Client) CloseIssue(number int) error {
 	_, _, err := c.githubClient.Issues.Edit(context.Background(), c.owner, c.repo, number, &github.IssueRequest{State: github.String("closed")})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to close issue")
 	}
 	return nil
 }
@@ -78,9 +83,10 @@ func (c *Client) ListLabels() ([]*github.Label, error) {
 
 	labels, _, err := c.githubClient.Issues.ListLabels(context.Background(), c.owner, c.repo, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to list labels")
 	}
 
+	// update the cache
 	c.labelCache = labels
 	c.cacheAge = time.Now()
 
@@ -92,7 +98,7 @@ func (c *Client) CreateLabel(name string) (*github.Label, error) {
 	labelRequest := &github.Label{Name: github.String(name), Color: github.String(randomColor())}
 	label, _, err := c.githubClient.Issues.CreateLabel(context.Background(), c.owner, c.repo, labelRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create label")
 	}
 
 	// invalidate the label cache
@@ -105,5 +111,5 @@ func randomColor() string {
 	r := rand.Intn(256)
 	g := rand.Intn(256)
 	b := rand.Intn(256)
-	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+	return fmt.Sprintf("%02x%02x%02x", r, g, b)
 }

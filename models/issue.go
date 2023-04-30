@@ -1,25 +1,25 @@
 package models
 
 import (
-	"crypto/sha256"
-	"encoding/json"
-	"fmt"
+	"strings"
 
 	"github.com/prometheus/alertmanager/template"
 )
 
 type Issue struct {
-	Title  string   `json:"title"`
-	Body   string   `json:"body"`
-	Labels []string `json:"labels"`
-}
-
-func (i *Issue) Hash() string {
-	jsonBytes, _ := json.Marshal(i)
-	return fmt.Sprintf("%x", sha256.Sum256(jsonBytes))
+	Title       string
+	Body        string
+	Labels      []string
+	Fingerprint string
 }
 
 func IssueFromAlert(a template.Alert) *Issue {
-	// TODO
-	return &Issue{}
+	labels := strings.Split(a.Labels["updog/labels"], ";")
+	labels = append(labels, "type/incident")
+	return &Issue{
+		Title:       a.Labels["updog/title"],
+		Body:        a.Labels["updog/body"],
+		Labels:      labels,
+		Fingerprint: a.Fingerprint,
+	}
 }
